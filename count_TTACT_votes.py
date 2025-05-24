@@ -4,13 +4,13 @@ one anonymous file of votes and one file of voter information.
 
 The script allows the user to select a CSV file, processes it to count votes for each candidate.
 
-The input CSV has 2 key columns:
+The input CSV has one column for the voter name, and one column for each candidate's votes.
 
-Attendee name - the name of the voter. Each name occurs up to 5 times, and we need to record all unique
-names in this column.
+Attendee name - the name of the voter. 
 
-Event type - the name of the candidate. Each candidate can have multiple votes, and we need to count the 
-total votes for each candidate.
+Columns 7 to the maximum column are the candidates, with the votes for each candidate in the rows below.
+The script counts the votes for each candidate and saves the results in a new CSV file named 'vote_counts.csv'.
+The unique voters are saved in a separate CSV file named 'voters.csv'.
 
 The script uses the pandas library to read the CSV file, and tkinter for the GUI interface.
 """
@@ -24,22 +24,33 @@ def count_votes(file_path):
         df = pd.read_csv(file_path)
 
         # Check if required columns are present
-        if 'Attendee name' not in df.columns or 'Event type' not in df.columns:
-            raise ValueError("CSV file must contain 'Attendee name' and 'Event type' columns.")
-
-        # Count votes for each candidate
-        vote_counts = df['Event type'].value_counts()
-
+        if 'Attendee name' not in df.columns:
+            raise ValueError("CSV file must contain 'Attendee name' column.")
+        
         # Create a list of unique voters
         unique_voters = df['Attendee name'].unique()
         
         # Remove voters called "Booking fee total" or "Total"
         unique_voters = [voter for voter in unique_voters if voter not in ["Booking fee total", "Total"]]
         
-        # Create a DataFrame for the results
-        result_df = vote_counts.reset_index()
-        result_df.columns = ['Candidate', 'Votes']
-        
+        # Find the names of the candidates, which are all columns 6 onwards
+        candidate_columns = df.columns[6:]  # Assuming the first 6 columns are not candidates
+        if candidate_columns.empty:
+            raise ValueError("No candidate columns found in the CSV file.")
+        candidate_columns = candidate_columns.tolist()
+
+        # Count votes for each candidate, by summing the values in each candidate column
+        votes = []
+        for candidate in candidate_columns: 
+            votes += [sum(df[candidate]==1)]
+        # Create a new DataFrame with the candidate names and their corresponding vote counts
+        result_df = pd.DataFrame({
+            'Candidate': candidate_columns,
+            'Votes': votes
+        })
+        # Sort the DataFrame by the number of votes in descending order
+        result_df = result_df.sort_values(by='Votes', ascending=False).reset_index(drop=True)
+                
         # Now that we've extracted the voters, delete the input file.
         os.remove(file_path)
 
