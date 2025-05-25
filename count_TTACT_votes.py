@@ -76,7 +76,7 @@ def select_file():
             messagebox.showinfo("Success", "Input file deleted\n Vote counts saved to 'vote_counts.csv'\n Voters saved to 'voters.csv'.",
                                 icon='info')
             # Display the first up to 10 rows of the vote counts in a message box
-            messagebox.showinfo("Vote Counts", result_df.head(10).to_string(index=False), 
+            messagebox.showinfo("Vote Counts", f"Total Voters: {len(unique_voters_df)}\n" + result_df.head(10).to_string(index=False), 
                                 icon='info')
             
             
